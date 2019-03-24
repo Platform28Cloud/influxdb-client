@@ -16,6 +16,10 @@
 #include <chrono>
 #include <algorithm>
 
+#ifdef _WIN32
+#include <iterator>
+#endif
+
 using namespace std;
 using namespace Influx;
 
