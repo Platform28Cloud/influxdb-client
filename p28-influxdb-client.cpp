@@ -156,6 +156,7 @@ static bool tagsVectorComparator(const KeyValue &a,const KeyValue &b) { return (
 void Connection::worker(std::future<void> exitSignalFuture)
 {
     CURL *curl;
+    struct curl_slist *headerList;
     CURLcode ret;
     string currentError;
 
@@ -209,7 +210,10 @@ void Connection::worker(std::future<void> exitSignalFuture)
             {
                 curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, cURL_debugFunction);
                 curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-                
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 2500);
+                headerList = NULL;
+                headerList = curl_slist_append(headerList, "Content-Type: application/x-www-form-urlencoded");
+
                 /* example.com is redirected, so we tell libcurl to follow redirection */
                 if ((ret = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L)))
                 {
@@ -309,6 +313,8 @@ void Connection::worker(std::future<void> exitSignalFuture)
                         workerLogger->debug("Sending data:\n%s", data.c_str());
                         workerLogger->debug("--------------------------------------------------------------------------------");
                     }
+                    curl_easy_setopt(curl, CURLOPT_HTTPPOST, 1L);
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
                     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
                     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
                     
@@ -319,6 +325,7 @@ void Connection::worker(std::future<void> exitSignalFuture)
                 }
 
                 /* always cleanup */
+                curl_slist_free_all(headerList);
                 curl_easy_cleanup(curl);
             }
             
